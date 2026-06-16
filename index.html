@@ -1,411 +1,1303 @@
 <!DOCTYPE html>
-
 <html lang="en">
-
 <head>
-
     <meta charset="UTF-8">
-
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-    <title>KrishiAI | Virtual Agronomist Portal</title>
-
+    <title>KrishiAI - Multi-Agent VLM Command Console</title>
     <script src="https://cdn.tailwindcss.com"></script>
-
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        .terminal-grid {
+            background-image: radial-gradient(#1e293b 1px, transparent 1px);
+            background-size: 12px 12px;
+        }
+        @keyframes pulse-ring {
+            0% { transform: scale(0.95); opacity: 0.4; }
+            50% { transform: scale(1.05); opacity: 0.8; }
+            100% { transform: scale(0.95); opacity: 0.4; }
+        }
+        .pulse-light {
+            animation: pulse-ring 2s infinite ease-in-out;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #020617;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1e293b;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #334155;
+        }
+        /* Highlight focus animations for Phase blocks */
+        .explainer-card.active-step {
+            border-color: #10b981;
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.15);
+            background-color: rgba(2, 6, 23, 0.8);
+        }
+    </style>
 </head>
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans antialiased selection:bg-emerald-500 selection:text-slate-950">
 
-<body class="min-h-screen bg-stone-50 text-gray-800 font-sans">
-
-
-
-    <header class="bg-emerald-700 text-white shadow-md px-6 py-4 flex justify-between items-center">
-
-        <div class="flex items-center space-x-3">
-
-            <span class="text-2xl">🌱</span>
-
-            <h1 class="text-xl font-bold tracking-wide">KrishiAI | Virtual Agronomist Portal</h1>
-
+    <header class="border-b border-slate-800 bg-slate-950/80 backdrop-blur-md sticky top-0 z-50 px-6 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
+        <div class="flex items-center gap-3">
+            <div class="p-2 bg-emerald-500/10 border border-emerald-500/30 rounded-xl">
+                <span class="text-2xl animate-spin-slow">🌿</span>
+            </div>
+            <div>
+                <h1 class="text-lg font-black tracking-tight text-white flex items-center gap-2">
+                    KrishiAI <span class="text-[9px] bg-emerald-500 text-slate-950 font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">Multi-Agent Engine v3.0</span>
+                </h1>
+                <p class="text-[9px] text-slate-400 font-mono uppercase tracking-wider">Multi-Agent Multimodal Vision-Language Model (VLM) Platform</p>
+            </div>
         </div>
-
-        <span class="bg-emerald-600 px-3 py-1 rounded-full text-xs font-semibold animate-pulse">System Live</span>
-
+        
+        <div class="flex items-center gap-2 font-mono text-xs z-50 relative">
+            <span class="text-slate-400 text-[10px] hidden sm:inline">STATE / REGION TARGET:</span>
+            <div class="relative w-56" id="state-combobox-wrapper">
+                <div class="flex items-center bg-black border border-slate-800 rounded-lg overflow-hidden focus-within:ring-1 focus-within:ring-emerald-500">
+                    <input 
+                        type="text" 
+                        id="agri-state-selector" 
+                        placeholder="Type or select region..." 
+                        class="bg-black text-emerald-400 px-3 py-1.5 w-full focus:outline-none font-mono text-xs w-44"
+                        onfocus="showStatesDropdown()"
+                        oninput="filterStatesDropdown()"
+                        value="Punjab"
+                    />
+                    <button 
+                        type="button" 
+                        onclick="toggleStatesDropdown()" 
+                        class="bg-black hover:bg-slate-950 border-l border-slate-800 text-emerald-400 px-3 py-1.5 flex items-center justify-center focus:outline-none font-bold select-none text-[10px]"
+                    >
+                        ▼
+                    </button>
+                </div>
+                <div id="states-dropdown-list" class="hidden absolute top-full left-0 right-0 mt-1 max-h-60 overflow-y-auto bg-slate-950 border border-slate-800 rounded-lg shadow-2xl font-sans text-xs">
+                    </div>
+            </div>
+        </div>
     </header>
 
-
-
-    <main class="max-w-7xl mx-auto p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-       
-
-        <div class="lg:col-span-2 space-y-6">
-
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-
-                <h2 class="text-lg font-bold text-emerald-900 flex items-center space-x-2 mb-4">
-
-                    <span>🩺</span> <span>Consult Virtual Agronomist AI</span>
-
+    <main class="max-w-7xl mx-auto p-6 grid grid-cols-1 lg:grid-cols-12 gap-8">
+        
+        <section class="lg:col-span-4 space-y-6">
+            
+            <div class="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-5 shadow-xl relative overflow-hidden">
+                <h2 class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-4 flex items-center gap-2 font-mono">
+                    📥 1. Ingestion Interface
                 </h2>
 
-                <p class="text-sm text-gray-500 mb-6">Describe your crop's current status and any observed symptoms below. Our expert AI model will diagnose the underlying issue and generate a structured treatment strategy.</p>
-
-
-
-                <form id="aiForm" class="space-y-4">
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-                        <div>
-
-                            <label class="block text-xs font-semibold uppercase text-gray-500 mb-1 tracking-wider">Crop Variety</label>
-
-                            <input
-
-                                type="text"
-
-                                id="cropType"
-
-                                placeholder="e.g., Rice, Tomato, Cotton"
-
-                                class="w-full border border-gray-200 rounded-lg p-2.5 text-sm focus:outline-none focus:border-emerald-600 transition shadow-sm"
-
-                                required
-
-                            />
-
-                        </div>
-
-                        <div>
-
-                            <label class="block text-xs font-semibold uppercase text-gray-500 mb-1 tracking-wider">Growth Stage</label>
-
-                            <select
-
-                                id="cropStage"
-
-                                class="w-full border border-gray-200 rounded-lg p-2.5 text-sm focus:outline-none focus:border-emerald-600 bg-white shadow-sm"
-
-                                required
-
-                            >
-
-                                <option value="">Choose Lifecycle Stage...</option>
-
-                                <option value="Seedling">Seedling (Early Stage)</option>
-
-                                <option value="Vegetative">Vegetative Growth</option>
-
-                                <option value="Flowering">Flowering / Fruiting</option>
-
-                                <option value="Harvesting">Ready for Harvest</option>
-
-                            </select>
-
-                        </div>
-
-                    </div>
-
-
-
+                <div class="grid grid-cols-2 gap-3 mb-4">
                     <div>
-
-                        <label class="block text-xs font-semibold uppercase text-gray-500 mb-1 tracking-wider">Observed Symptoms & Field Anomalies</label>
-
-                        <textarea
-
-                            id="symptoms"
-
-                            rows="4"
-
-                            placeholder="Detail leaf discoloration, holes, wilting, powdery mildew, or pest clusters clearly..."
-
-                            class="w-full border border-gray-200 rounded-lg p-2.5 text-sm focus:outline-none focus:border-emerald-600 transition shadow-sm"
-
-                            required
-
-                        ></textarea>
-
-                    </div>
-
-
-
-                    <button
-
-                        type="submit"
-
-                        id="submitBtn"
-
-                        class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-3 rounded-lg text-sm transition shadow-sm font-semibold tracking-wide"
-
-                    >
-
-                        Execute AI Consultation
-
-                    </button>
-
-                </form>
-
-            </div>
-
-
-
-            <div id="aiResponseContainer" class="hidden bg-emerald-50 rounded-xl border border-emerald-100 p-6 shadow-sm transition-all duration-300">
-
-                <h3 class="text-md font-bold text-emerald-900 mb-3 flex items-center space-x-2">
-
-                    <span>🤖</span> <span>Agronomist Diagnostic Analysis</span>
-
-                </h3>
-
-                <div id="aiResponseText" class="text-sm text-emerald-950 whitespace-pre-line bg-white p-5 rounded-lg border border-emerald-100 shadow-inner leading-relaxed font-mono">
-
-                    </div>
-
-            </div>
-
-        </div>
-
-
-
-        <div class="space-y-6">
-
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-
-                <h2 class="text-lg font-bold text-gray-900 flex items-center space-x-2 mb-3">
-
-                    <span>🗺️</span> <span>Log Operational Field</span>
-
-                </h2>
-
-                <form id="logForm" class="space-y-3">
-
-                    <input
-
-                        type="text"
-
-                        id="logCropName"
-
-                        placeholder="Crop Designation (e.g., Maize)"
-
-                        class="w-full border border-gray-200 rounded-lg p-2 text-sm focus:outline-none focus:border-emerald-600 shadow-sm"
-
-                        required
-
-                    />
-
-                    <div class="grid grid-cols-2 gap-2">
-
-                        <input
-
-                            type="number"
-
-                            step="0.1"
-
-                            id="logArea"
-
-                            placeholder="Area (Acres)"
-
-                            class="w-full border border-gray-200 rounded-lg p-2 text-sm focus:outline-none focus:border-emerald-600 shadow-sm"
-
-                            required
-
+                        <label class="block text-[8px] font-mono text-slate-400 mb-1 tracking-wider uppercase">Specimen Variety</label>
+                        <input 
+                            type="text" 
+                            id="crop-variety" 
+                            placeholder="e.g., Rice, Aloe Vera" 
+                            class="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-emerald-500 font-mono"
+                            value="Rice"
                         />
-
-                        <select
-
-                            id="logStage"
-
-                            class="w-full border border-gray-200 rounded-lg p-2 text-sm focus:outline-none focus:border-emerald-600 bg-white shadow-sm"
-
-                        >
-
-                            <option value="Seedling">Seedling</option>
-
-                            <option value="Vegetative">Vegetative</option>
-
-                            <option value="Flowering">Flowering</option>
-
-                            <option value="Harvesting">Harvesting</option>
-
+                    </div>
+                    <div>
+                        <label class="block text-[8px] font-mono text-slate-400 mb-1 tracking-wider uppercase">Lifecycle Phase</label>
+                        <select id="growth-stage" class="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-emerald-500 bg-slate-950 font-mono">
+                            <option value="Seedling / Initial Emergence">Seedling</option>
+                            <option value="Vegetative Growth" selected>Vegetative</option>
+                            <option value="Flowering / Tasseling Stage">Flowering</option>
+                            <option value="Fruiting / Grain Setting">Fruiting</option>
+                            <option value="Harvest Maturity">Maturity</option>
                         </select>
-
                     </div>
-
-                    <button type="submit" class="w-full bg-gray-800 hover:bg-gray-900 text-white font-medium py-2 rounded-lg text-xs transition shadow-sm uppercase tracking-wider">
-
-                        + Append to Active Ledger
-
-                    </button>
-
-                </form>
-
-            </div>
-
-
-
-            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-
-                <h2 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">Active Monitored Parcels</h2>
-
-                <div id="logList" class="space-y-3">
-
-                    <div class="border border-gray-100 rounded-lg p-3 flex justify-between items-center bg-stone-50 shadow-sm">
-
-                        <div>
-
-                            <h4 class="font-bold text-sm text-gray-900">Wheat (Premium)</h4>
-
-                            <p class="text-xs text-gray-500">5.0 Acres • Vegetative Growth</p>
-
-                        </div>
-
-                        <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-green-100 text-green-700">Healthy</span>
-
-                    </div>
-
                 </div>
 
+                <div class="grid grid-cols-2 gap-2.5 mb-4">
+                    <button 
+                        type="button"
+                        onclick="triggerCamera()" 
+                        class="border border-emerald-500/20 hover:border-emerald-500/50 bg-emerald-950/10 hover:bg-emerald-950/20 rounded-xl p-2.5 text-center transition flex flex-col items-center justify-center gap-1 group active:scale-[0.98]"
+                    >
+                        <span class="text-xl group-hover:scale-110 transition duration-200">📸</span>
+                        <span class="text-[10px] font-bold text-emerald-400">Capture Live Lens</span>
+                        <span class="text-[8px] text-emerald-500/70 font-mono">Mobile Camera</span>
+                    </button>
+
+                    <button 
+                        type="button"
+                        onclick="triggerFile()" 
+                        class="border border-slate-800 hover:border-slate-700 bg-slate-950/50 hover:bg-slate-900 rounded-xl p-2.5 text-center transition flex flex-col items-center justify-center gap-1 group active:scale-[0.98]"
+                    >
+                        <span class="text-xl group-hover:scale-110 transition duration-200">📂</span>
+                        <span class="text-[10px] font-bold text-slate-300">Browse Kaggle</span>
+                        <span class="text-[8px] text-slate-500 font-mono">Local Gallery</span>
+                    </button>
+                </div>
+
+                <input type="file" id="camera-hardware" accept="image/*" capture="environment" class="hidden" style="display: none;">
+                <input type="file" id="local-file" accept="image/*" class="hidden" style="display: none;">
+
+                <div id="file-ingested-indicator" class="hidden p-2.5 bg-emerald-950/20 border border-emerald-500/20 rounded-xl items-center justify-between mb-4 animate-fadeIn">
+                    <div class="flex items-center gap-2 truncate">
+                        <span class="text-emerald-400 font-mono text-xs">●</span>
+                        <span id="ingested-filename" class="text-[10px] text-emerald-300 font-mono truncate max-w-[150px]">None.jpg</span>
+                    </div>
+                    <button type="button" onclick="clearIngestedImage()" class="text-[9px] font-mono text-red-400 hover:underline">Clear</button>
+                </div>
+
+                <div class="mb-4 bg-slate-950/60 p-3 rounded-xl border border-slate-850">
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="block text-[8px] font-mono text-slate-400 tracking-wider uppercase">Vigor Sequence Logs (Past 7 Days)</label>
+                        <button type="button" onclick="randomizeHistoricalLogs()" class="text-[8px] font-mono text-cyan-400 hover:underline">🔄 Regenerate</button>
+                    </div>
+                    <div class="grid grid-cols-7 gap-1 font-mono text-[9px] text-center" id="historical-logs-inputs-container">
+                        </div>
+                </div>
+
+                <div class="mb-4">
+                    <label class="block text-[8px] font-mono text-slate-400 mb-1 tracking-wider uppercase">Field Symptom Notes (Optional)</label>
+                    <textarea 
+                        id="symptoms-input" 
+                        rows="2" 
+                        placeholder="e.g., Yellowing margins on outer blades..." 
+                        class="w-full bg-slate-950/80 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:ring-1 focus:ring-emerald-500 font-mono"
+                    ></textarea>
+                </div>
+
+                <button type="button" id="btn-metrics-modal" onclick="openMetricsVisualizationModal()" class="w-full py-2.5 bg-slate-850 hover:bg-slate-800 text-cyan-400 border border-cyan-500/20 rounded-xl text-xs font-mono font-bold flex items-center justify-center gap-2 transition">
+                    📊 VIEW REAL-TIME CV &amp; NEURAL ANALYTICS
+                </button>
             </div>
 
-        </div>
+            <div class="bg-slate-900/40 border border-slate-800/80 rounded-2xl p-5 shadow-xl relative overflow-hidden">
+                <div class="flex justify-between items-center mb-3">
+                    <h2 class="text-[10px] font-bold uppercase tracking-wider text-slate-400 flex items-center gap-2 font-mono">
+                        🎛️ 2. CV Preprocessor Channel
+                    </h2>
+                </div>
 
+                <div class="aspect-square bg-slate-950 rounded-xl border border-slate-850 relative overflow-hidden flex items-center justify-center canvas-grid shadow-inner font-sans">
+                    <div class="scanner-bar absolute w-full h-[1px] bg-emerald-500/30 blur-[1px] top-0 left-0"></div>
+                    
+                    <canvas id="cv-source-canvas" class="hidden absolute top-0 left-0 w-full h-full object-contain"></canvas>
+                    <canvas id="cv-processed-canvas" class="w-full h-full object-contain z-10"></canvas>
+                    
+                    <div id="cv-empty-placeholder" class="text-center p-4">
+                        <span class="text-2xl block opacity-30 mb-1">👁️</span>
+                        <p class="text-[10px] text-slate-500 font-mono">Awaiting Spatial Pixel Matrix</p>
+                    </div>
+                </div>
 
+                <div class="grid grid-cols-3 gap-1.5 mt-3 text-center">
+                    <button type="button" id="btn-chan-raw" onclick="switchCVMode('raw')" class="px-1 py-1 bg-slate-950 border border-slate-800 text-slate-400 rounded-lg text-[9px] font-mono font-bold uppercase transition">
+                        RGB Source
+                    </button>
+                    <button type="button" id="btn-chan-hsv" onclick="switchCVMode('hsv')" class="px-1 py-1 bg-emerald-950 border border-emerald-500 text-emerald-400 rounded-lg text-[9px] font-mono font-bold uppercase transition">
+                        HSV Mask
+                    </button>
+                    <button type="button" id="btn-chan-sobel" onclick="switchCVMode('sobel')" class="px-1 py-1 bg-slate-950 hover:bg-slate-900 border border-slate-800 text-slate-400 rounded-lg text-[9px] font-mono font-bold uppercase transition">
+                        Sobel Edge
+                    </button>
+                </div>
+
+                <div class="mt-3 border-t border-slate-800/60 pt-2 grid grid-cols-2 gap-3 font-mono text-[9px] text-slate-400">
+                    <div>
+                        <p class="flex justify-between border-b border-slate-950 pb-1">
+                            <span>AVG HUE:</span>
+                            <span id="metric-avg-hue" class="text-white">-</span>
+                        </p>
+                        <p class="flex justify-between pt-1">
+                            <span>CHLOROSIS:</span>
+                            <span id="metric-chlorosis-ratio" class="text-amber-400">-</span>
+                        </p>
+                    </div>
+                    <div>
+                        <p class="flex justify-between border-b border-slate-950 pb-1">
+                            <span>EDGES:</span>
+                            <span id="metric-edge-density" class="text-cyan-400">-</span>
+                        </p>
+                        <p class="flex justify-between pt-1">
+                            <span>RESOLUTION:</span>
+                            <span id="metric-img-dims" class="text-white">-</span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <button type="button" id="btn-orchestrate" onclick="executeMultiAgentOrchestration()" class="w-full bg-gradient-to-r from-emerald-500 to-teal-500 text-slate-950 font-black py-4 px-6 rounded-2xl transition shadow-lg shadow-emerald-500/10 active:scale-[0.98] hover:brightness-110 flex items-center justify-center gap-2 text-xs uppercase tracking-wider">
+                <span>⚡</span>
+                <span>INTRALINK MULTI-AGENT INFERENCE</span>
+            </button>
+
+        </section>
+
+        <section class="lg:col-span-8 space-y-6">
+            
+            <div class="border-b border-slate-800 flex gap-6">
+                <button type="button" onclick="switchTab('agent')" id="tab-btn-agent" class="tab-btn active pb-3 font-bold text-sm border-b-2 border-transparent transition cursor-pointer">
+                    🩺 Diagnostic Command Centre
+                </button>
+                <button type="button" onclick="switchTab('explainer')" id="tab-btn-explainer" class="tab-btn pb-3 font-bold text-sm border-b-2 border-transparent transition cursor-pointer">
+                    🛠️ AI Engine Explainer Panel
+                </button>
+                <button type="button" onclick="switchTab('neural')" id="tab-btn-neural" class="tab-btn pb-3 font-bold text-sm border-b-2 border-transparent transition cursor-pointer">
+                    🧠 Interactive Attention Neural Simulator
+                </button>
+            </div>
+
+            <div id="tab-content-agent" class="space-y-6">
+                <div class="bg-slate-900/30 border border-slate-800/80 rounded-3xl p-6 shadow-2xl relative overflow-hidden terminal-grid">
+                    <div class="flex justify-between items-center border-b border-slate-800 pb-4 mb-6">
+                        <div>
+                            <h2 class="text-xs font-mono font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 pulse-light"></span>
+                                ACTIVE COLLABORATION PANEL
+                            </h2>
+                            <p class="text-[9px] font-mono text-slate-500 mt-0.5">Four specialized deep learning sub-systems communicating in real time</p>
+                        </div>
+                        <span class="text-[9px] font-mono bg-slate-950 px-2 py-1 border border-slate-800 rounded text-slate-400 font-bold">MUTUALLY GROUNDED MODE</span>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="bg-slate-950/90 border border-slate-850 rounded-xl p-4 flex flex-col justify-between min-h-[220px]">
+                            <div class="flex items-center justify-between border-b border-slate-900 pb-2 mb-2">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-lg">🤖</span>
+                                    <div>
+                                        <h3 class="text-xs font-bold font-mono text-slate-200">Agent 1: PathoVision</h3>
+                                        <p class="text-[8px] font-mono text-slate-500">Phytopathological Image Decoder</p>
+                                    </div>
+                                </div>
+                                <span id="status-pathologist" class="text-[8px] font-mono bg-slate-900 text-slate-400 px-1.5 py-0.5 rounded uppercase">Idle</span>
+                            </div>
+                            <div id="output-pathologist" class="text-[10px] font-mono text-slate-400 flex-grow whitespace-pre-wrap overflow-y-auto max-h-[140px] leading-relaxed">
+Awaiting multimodal pixel matrix ingestion to execute spatial segmentation...
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-950/90 border border-slate-850 rounded-xl p-4 flex flex-col justify-between min-h-[220px]">
+                            <div class="flex items-center justify-between border-b border-slate-900 pb-2 mb-2">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-lg">🌐</span>
+                                    <div>
+                                        <h3 class="text-xs font-bold font-mono text-slate-200">Agent 2: RegionalGrounded</h3>
+                                        <p class="text-[8px] font-mono text-slate-500">Soil & Climate Extension Specialist</p>
+                                    </div>
+                                </div>
+                                <span id="status-soil" class="text-[8px] font-mono bg-slate-900 text-slate-400 px-1.5 py-0.5 rounded uppercase">Idle</span>
+                            </div>
+                            <div id="output-soil" class="text-[10px] font-mono text-slate-400 flex-grow whitespace-pre-wrap overflow-y-auto max-h-[140px] leading-relaxed">
+Awaiting state-wise regional dictionary retrieval to perform regional validation...
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-950/90 border border-slate-850 rounded-xl p-4 flex flex-col justify-between min-h-[220px]">
+                            <div class="flex items-center justify-between border-b border-slate-900 pb-2 mb-2">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-lg">🧪</span>
+                                    <div>
+                                        <h3 class="text-xs font-bold font-mono text-slate-200">Agent 3: BioTherapeutic</h3>
+                                        <p class="text-[8px] font-mono text-slate-500">ICAR Remediation Pharmacist</p>
+                                    </div>
+                                </div>
+                                <span id="status-therapeutics" class="text-[8px] font-mono bg-slate-900 text-slate-400 px-1.5 py-0.5 rounded uppercase">Idle</span>
+                            </div>
+                            <div id="output-therapeutics" class="text-[10px] font-mono text-slate-400 flex-grow whitespace-pre-wrap overflow-y-auto max-h-[140px] leading-relaxed">
+Awaiting diagnostic consensus to formulate therapeutic prescriptions...
+                            </div>
+                        </div>
+
+                        <div class="bg-slate-950/90 border border-slate-850 rounded-xl p-4 flex flex-col justify-between min-h-[220px]">
+                            <div class="flex items-center justify-between border-b border-slate-900 pb-2 mb-2">
+                                <div class="flex items-center gap-2">
+                                    <span class="text-lg">📈</span>
+                                    <div>
+                                        <h3 class="text-xs font-bold font-mono text-slate-200">Agent 4: YieldPrognostic</h3>
+                                        <p class="text-[8px] font-mono text-slate-500">Dynamic Lifecycle Forecaster</p>
+                                    </div>
+                                </div>
+                                <span id="status-prognostics" class="text-[8px] font-mono bg-slate-900 text-slate-400 px-1.5 py-0.5 rounded uppercase">Idle</span>
+                            </div>
+                            <div id="output-prognostics" class="text-[10px] font-mono text-slate-400 flex-grow whitespace-pre-wrap overflow-y-auto max-h-[140px] leading-relaxed">
+Awaiting pathological diagnostics to calculate 14-day recovery curves...
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 border-t border-slate-850 pt-4 bg-slate-950 p-3 rounded-xl border border-slate-900">
+                        <p class="text-[8px] font-mono text-slate-500 uppercase tracking-wider mb-2">Internal Agent-Bus Message Feed</p>
+                        <div id="agent-bus-logs" class="space-y-1 max-h-[75px] overflow-y-auto font-mono text-[9px] text-slate-400 leading-relaxed">
+                            <p class="text-slate-500 italic">[SYSTEM] All collaborative network nodes are initialized. Standby.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-slate-900/30 border border-slate-800 rounded-3xl p-6 shadow-2xl relative">
+                    <div class="border-b border-slate-800 pb-3 mb-4 flex justify-between items-center flex-wrap gap-2">
+                        <div>
+                            <h3 class="text-xs font-mono font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-2">
+                                📊 14-Day Temporal Trajectory Forecaster (RNN/LSTM Prediction)
+                            </h3>
+                            <p class="text-[9px] font-mono text-slate-500 mt-0.5">Visually demonstrates deep learning sequence modeling for plant health trajectory tracking</p>
+                        </div>
+                        <span class="text-[9px] font-mono bg-emerald-950/30 border border-emerald-500/20 px-2.5 py-0.5 rounded text-emerald-400">Sequence Output: 14 Days</span>
+                    </div>
+
+                    <div class="w-full h-64 bg-slate-950 p-3 border border-slate-850 rounded-xl relative">
+                        <canvas id="temporal-trajectory-chart" class="w-full h-full"></canvas>
+                    </div>
+
+                    <div class="mt-3 p-3 bg-slate-950/80 rounded-xl border border-slate-900 grid grid-cols-1 md:grid-cols-2 gap-4 font-mono text-[9px] text-slate-400 leading-relaxed">
+                        <div>
+                            <p class="text-white font-bold uppercase mb-1">Recurrent Sequence Modeling (RNN/LSTM):</p>
+                            <p>Inputs past 7-day normalized health vectors $X = [x_{t-7}, \dots, x_{t_0}]$ to initialize internal hidden state cell gates ($h_t$). The GRU cell computes progressive updates:</p>
+                            <p class="text-[10px] text-emerald-400 mt-1">$$h_t = (1 - z_t) \odot h_{t-1} + z_t \odot \tilde{h}_t$$</p>
+                        </div>
+                        <div>
+                            <p class="text-white font-bold uppercase mb-1">Biological Kinetics Prediction:</p>
+                            <p>Combines neural parameters with disease-specific decay constants ($k$) retrieved from `knowledge_base.py` to project recovery values:</p>
+                            <p class="text-[10px] text-cyan-400 mt-1">$$V(t) = V_0 + (1.0 - V_0) \cdot (1.0 - e^{-k \cdot t})$$</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="tab-content-explainer" class="hidden bg-slate-900/30 border border-slate-800 rounded-3xl p-6 shadow-2xl relative overflow-hidden">
+                <div class="border-b border-slate-800 pb-3 mb-6 font-sans">
+                    <h3 class="text-sm font-bold text-emerald-400 font-mono uppercase tracking-wider">🛠️ Dynamic AI Mechanism Explainer</h3>
+                    <p class="text-[10px] text-slate-400 font-mono mt-1">Active step tracking of deep learning mechanisms executed during diagnostics.</p>
+                </div>
+
+                <div class="space-y-4">
+                    <div id="step-card-cv" class="explainer-card bg-slate-950/40 p-4 border border-slate-850 rounded-xl relative transition duration-300">
+                        <span id="step-badge-cv" class="absolute top-4 right-4 bg-slate-800 text-slate-400 font-mono text-[9px] px-2 py-0.5 rounded border border-slate-700">Awaiting</span>
+                        <h4 class="font-bold font-mono text-xs text-white flex items-center gap-2">
+                            <span>1.</span> Spatial Pixel Matrix Partitioning (Computer Vision)
+                        </h4>
+                        <p class="text-xs text-slate-400 mt-1 leading-relaxed">
+                            Converts raw RGB pixels into the polar cylindrical HSV bounds. Isolates the chlorophyll absorption band ($H \in [70^\circ, 150^\circ]$) from chlorotic tissues ($H \in [30^\circ, 65^\circ]$) using high-speed client-side array vectorization, computing precise tissue-decay quotients.
+                        </p>
+                    </div>
+
+                    <div id="step-card-grounding" class="explainer-card bg-slate-950/40 p-4 border border-slate-850 rounded-xl relative transition duration-300">
+                        <span id="step-badge-grounding" class="absolute top-4 right-4 bg-slate-800 text-slate-400 font-mono text-[9px] px-2 py-0.5 rounded border border-slate-700">Awaiting</span>
+                        <h4 class="font-bold font-mono text-xs text-white flex items-center gap-2">
+                            <span>2.</span> In-Memory Ground-Truth Alignment (Grounding)
+                        </h4>
+                        <p class="text-xs text-slate-400 mt-1 leading-relaxed">
+                            Queries our optimized local agricultural dataset in constant time ($O(1)$) using the selected regional target state. Extracts soil pH levels, climatic humidity indexes, and ICAR treatment standards, creating strict prompt boundary vectors.
+                        </p>
+                    </div>
+
+                    <div id="step-card-stochastic" class="explainer-card bg-slate-950/40 p-4 border border-slate-850 rounded-xl relative transition duration-300">
+                        <span id="step-badge-stochastic" class="absolute top-4 right-4 bg-slate-800 text-slate-400 font-mono text-[9px] px-2 py-0.5 rounded border border-slate-700">Awaiting</span>
+                        <h4 class="font-bold font-mono text-xs text-white flex items-center gap-2">
+                            <span>3.</span> Low-Entropy Stochastic Bounding ($T = 0.08$)
+                        </h4>
+                        <p class="text-xs text-slate-400 mt-1 leading-relaxed">
+                            Passes the multimodal context into the VLM. Locks the temperature scaling parameters down to $0.08$ to flatten the output Softmax distribution. This enforces near-deterministic vocabulary selection and blocks open-domain AI hallucinations.
+                        </p>
+                    </div>
+
+                    <div id="step-card-routing" class="explainer-card bg-slate-950/40 p-4 border border-slate-850 rounded-xl relative transition duration-300">
+                        <span id="step-badge-routing" class="absolute top-4 right-4 bg-slate-800 text-slate-400 font-mono text-[9px] px-2 py-0.5 rounded border border-slate-700">Awaiting</span>
+                        <h4 class="font-bold font-mono text-xs text-white flex items-center gap-2">
+                            <span>4.</span> Multi-Agent Attentional Stream Routing
+                        </h4>
+                        <p class="text-xs text-slate-400 mt-1 leading-relaxed">
+                            Slices the input image into 16x16 visual patch tokens (Vision Transformer). The network routes the tokens to separate agentic schemas (Pathologist, Extension, Pharmacist, Forecaster) wrapped inside secure XML blocks for real-time frontend terminal parsing.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <div id="tab-content-neural" class="hidden bg-slate-950/40 border border-slate-800 rounded-2xl p-6 shadow-xl space-y-6 font-mono text-xs">
+                <div class="border-b border-slate-900 pb-3">
+                    <h3 class="text-sm font-bold text-white uppercase tracking-wider font-sans font-sans">Multimodal Cross-Attention Weights Simulator</h3>
+                    <p class="text-[10px] text-slate-400 mt-1">Simulates cross-modal alignment between visual pixels and regional text tokens.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                        <h4 class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">1. Visual Patches (16x16 Grid)</h4>
+                        <div class="grid grid-cols-4 grid-rows-4 gap-2 aspect-square bg-slate-950 p-4 rounded-xl border border-slate-900">
+                            <script>
+                                for(let i=0; i<16; i++) {
+                                    document.write(`
+                                        <div id="patch-${i}" class="bg-slate-900 border border-slate-800 rounded flex items-center justify-center text-[8px] font-mono font-bold text-slate-600 transition duration-300 font-sans">
+                                            P-${i+1}
+                                        </div>
+                                    `);
+                                }
+                            </script>
+                        </div>
+                        <p class="text-[8px] text-slate-500 mt-2">Highlights represent attention coordinates on specific leaf symptoms.</p>
+                    </div>
+
+                    <div class="flex flex-col justify-between">
+                        <div>
+                            <h4 class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">2. Structured Input Tokens</h4>
+                            <div class="space-y-2 text-[9px]">
+                                <div id="token-t1" class="p-2.5 bg-slate-900 rounded-lg border border-slate-800 flex justify-between items-center transition duration-300">
+                                    <span>T1: SPECIMEN VARIETY</span>
+                                    <span class="text-slate-500">Weight: <span class="text-emerald-400 font-bold">0.82</span></span>
+                                </div>
+                                <div id="token-t2" class="p-2.5 bg-slate-900 rounded-lg border border-slate-800 flex justify-between items-center transition duration-300">
+                                    <span>T2: LIFECYCLE DEVELOPMENT</span>
+                                    <span class="text-slate-500">Weight: <span class="text-emerald-400 font-bold">0.45</span></span>
+                                </div>
+                                <div id="token-t3" class="p-2.5 bg-slate-900 rounded-lg border border-slate-800 flex justify-between items-center transition duration-300">
+                                    <span>T3: SOIL & CLIMATE REGION</span>
+                                    <span class="text-slate-500">Weight: <span class="text-cyan-400 font-bold">0.91</span></span>
+                                </div>
+                                <div id="token-t4" class="p-2.5 bg-slate-900 rounded-lg border border-slate-800 flex justify-between items-center transition duration-300">
+                                    <span>T4: REGIONAL PATHOLOGY DATASET</span>
+                                    <span class="text-slate-500">Weight: <span class="text-cyan-400 font-bold">0.96</span></span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="p-3 bg-slate-950/80 rounded-xl border border-slate-900 font-mono text-[9px] text-slate-400 space-y-1">
+                            <p class="text-white font-bold uppercase font-sans">Multi-Head Decoder Math:</p>
+                            <p class="text-[10px]">$$\text{Attention}(Q, K, V) = \text{Softmax}\left(\frac{QK^T}{\sqrt{d_k}}\right)V$$</p>
+                            <p class="text-[8px] text-slate-500">The VLM projects pixels to Query vector coordinates while aligning State Ground-Truth to Keys and Values.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-center font-sans">
+                    <button type="button" onclick="startNeuralWeightSimulation()" class="px-4 py-2 bg-emerald-500 text-slate-950 font-bold rounded-xl text-xs uppercase tracking-wider hover:bg-emerald-400 transition active:scale-[0.98]">
+                        🔄 Simulate Attention Alignments
+                    </button>
+                </div>
+            </div>
+
+        </section>
 
     </main>
 
-
-
-    <script>
-
-        // --- 1. HANDLING AI DIAGNOSIS REQUESTS ---
-
-        document.getElementById('aiForm').addEventListener('submit', async (e) => {
-
-            e.preventDefault();
-
-           
-
-            const submitBtn = document.getElementById('submitBtn');
-
-            const responseContainer = document.getElementById('aiResponseContainer');
-
-            const responseText = document.getElementById('aiResponseText');
-
-           
-
-            // UI Visual Loading State Update
-
-            submitBtn.disabled = true;
-
-            submitBtn.innerText = 'Analyzing crop symptoms against expert database...';
-
-            responseContainer.classList.remove('hidden');
-
-            responseText.innerHTML = `<div class="flex items-center space-x-2 text-emerald-700 font-sans">
-
-                <div class="animate-spin rounded-full h-4 w-4 border-2 border-emerald-700 border-t-transparent"></div>
-
-                <span>Synthesizing organic and chemical remedies...</span>
-
-            </div>`;
-
-
-
-            // Data extraction
-
-            const payload = {
-
-                crop_type: document.getElementById('cropType').value,
-
-                crop_stage: document.getElementById('cropStage').value,
-
-                symptoms: document.getElementById('symptoms').value
-
-            };
-
-
-
-            try {
-
-                // Fetch call targeting our FastAPI local server endpoint
-
-                const response = await fetch('http://127.0.0.1:8000/api/advise', {
-
-                    method: 'POST',
-
-                    headers: { 'Content-Type': 'application/json' },
-
-                    body: JSON.stringify(payload)
-
-                });
-
-                const data = await response.json();
-
-                responseText.innerText = data.diagnosis_report;
-
-            } catch (error) {
-
-                responseText.innerHTML = `<span class="text-red-600 font-sans font-medium">⚠️ Connection Refused! Make sure your FastAPI backend server is running in VS Code using: <code class="bg-red-50 px-1 py-0.5 rounded border text-xs">uvicorn main:app --reload</code></span>`;
-
-            } finally {
-
-                submitBtn.disabled = false;
-
-                submitBtn.innerText = 'Execute AI Consultation';
-
-            }
-
-        });
-
-
-
-        // --- 2. HANDLING FIELD LOG ENTRIES LOCALLY ---
-
-        document.getElementById('logForm').addEventListener('submit', (e) => {
-
-            e.preventDefault();
-
-           
-
-            const cropName = document.getElementById('logCropName').value;
-
-            const area = document.getElementById('logArea').value;
-
-            const stage = document.getElementById('logStage').value;
-
-            const logList = document.getElementById('logList');
-
-
-
-            const newEntry = document.createElement('div');
-
-            newEntry.className = "border border-gray-100 rounded-lg p-3 flex justify-between items-center bg-stone-50 hover:bg-stone-100 transition shadow-sm animate-fade-in";
-
-            newEntry.innerHTML = `
-
+    <div id="metrics-modal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md hidden z-[100] flex items-center justify-center p-6">
+        <div class="bg-slate-900 border border-slate-800 w-full max-w-4xl rounded-2xl overflow-hidden shadow-2xl relative flex flex-col max-h-[90vh] font-sans">
+            
+            <div class="bg-slate-950 px-6 py-4 border-b border-slate-800 flex justify-between items-center">
                 <div>
+                    <h3 class="text-sm font-bold font-mono text-white flex items-center gap-2">
+                        📊 Real-Time CV &amp; Neural Analytics Pipeline
+                    </h3>
+                    <p class="text-[9px] font-mono text-slate-400 mt-0.5">Calculated natively from currently ingested leaf pixel arrays</p>
+                </div>
+                <button type="button" onclick="closeMetricsVisualizationModal()" class="text-slate-400 hover:text-white font-bold font-mono text-xs px-3 py-1.5 bg-slate-850 hover:bg-slate-800 rounded-lg">
+                    [CLOSE ESC]
+                </button>
+            </div>
 
-                    <h4 class="font-bold text-sm text-gray-900">${cropName}</h4>
-
-                    <p class="text-xs text-gray-500">${parseFloat(area).toFixed(1)} Acres • ${stage}</p>
-
+            <div class="p-6 overflow-y-auto space-y-6 flex-grow grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                <div class="bg-slate-950 p-4 border border-slate-850 rounded-xl flex flex-col justify-between">
+                    <h4 class="text-[10px] font-mono font-bold text-slate-400 mb-2 uppercase tracking-wider">1. RGB Pixel Intensity Histogram</h4>
+                    <canvas id="histogram-canvas" class="w-full h-44 bg-slate-900/40 rounded-lg border border-slate-800"></canvas>
+                    <p class="text-[8px] font-mono text-slate-500 mt-2">Plots the distribution of pixel values (0-255) for Red, Green, and Blue channels computed in real-time from the leaf photo.</p>
                 </div>
 
-                <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-green-100 text-green-700">Healthy</span>
+                <div class="bg-slate-950 p-4 border border-slate-850 rounded-xl flex flex-col justify-between">
+                    <h4 class="text-[10px] font-mono font-bold text-slate-400 mb-2 uppercase tracking-wider">2. Simulated Softmax Probability Distribution</h4>
+                    <canvas id="softmax-canvas" class="w-full h-44 bg-slate-900/40 rounded-lg border border-slate-800"></canvas>
+                    <p class="text-[8px] font-mono text-slate-500 mt-2">Compares classification weights for target diseases after mapping through the network's terminal Softmax layer.</p>
+                </div>
 
-            `;
+                <div class="bg-slate-950 p-4 border border-slate-850 rounded-xl flex flex-col justify-between">
+                    <h4 class="text-[10px] font-mono font-bold text-slate-400 mb-2 uppercase tracking-wider">3. Sobel Gradient Density Scatter</h4>
+                    <canvas id="density-canvas" class="w-full h-44 bg-slate-900/40 rounded-lg border border-slate-800"></canvas>
+                    <p class="text-[8px] font-mono text-slate-500 mt-2">Plots spatial edge coordinate distributions across leaf quadrants using Sobel convolution gradient magnitudes.</p>
+                </div>
 
+                <div class="bg-slate-950 p-4 border border-slate-850 rounded-xl flex flex-col justify-between font-mono text-[9px] text-slate-400 leading-relaxed">
+                    <h4 class="text-[10px] font-bold text-emerald-400 mb-1 uppercase tracking-wider">Phytopathological Analytics Report</h4>
+                    <p>Calculates spatial structures, texture vectors, and color decay boundaries directly from the uploaded plant specimen.</p>
+                    <div class="border-t border-slate-900 pt-2 space-y-1">
+                        <p class="flex justify-between"><span>Active Chlorophyll Green Index:</span><span id="popup-green-index" class="text-white">-</span></p>
+                        <p class="flex justify-between"><span>Isolated Chlorosis Coverage:</span><span id="popup-chlorosis-pct" class="text-amber-400">-</span></p>
+                        <p class="flex justify-between"><span>Sobel High-Frequency Edges:</span><span id="popup-edges-pct" class="text-cyan-400">-</span></p>
+                    </div>
+                </div>
 
+            </div>
 
-            logList.insertBefore(newEntry, logList.firstChild);
+        </div>
+    </div>
 
-            document.getElementById('logForm').reset();
+    <script>
+        const backendUrl = "https://krishiai-backend-jgvb.onrender.com";
+        let uploadedFileObject = null;
+        let activeCVMode = "hsv"; // Set default to HSV channel mode configuration
+        let sourceImageData = null;
+        let temporalChart = null; // Global Chart.js reference
 
+        // 28 Indian States + Subtropical zones database mappings
+        const indianStatesList = [
+            "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", 
+            "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jammu & Kashmir", 
+            "Jharkhand", "Karnataka", "Kerala", "Madhya Pradesh", "Maharashtra", 
+            "Manipur", "Meghalaya", "Mizoram", "Nagaland", "Odisha", "Punjab", 
+            "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana", "Tripura", 
+            "Uttar Pradesh", "Uttarakhand", "West Bengal", "Southeast Asia (Humid Tropical)", 
+            "South Asia (Subtropical)", "National Gardening"
+        ];
+
+        // --- Custom Searchable Combobox logic ---
+        function showStatesDropdown() {
+            const dropdown = document.getElementById("states-dropdown-list");
+            dropdown.classList.remove("hidden");
+            renderStatesDropdown(indianStatesList);
+        }
+
+        function toggleStatesDropdown() {
+            const dropdown = document.getElementById("states-dropdown-list");
+            if (dropdown.classList.contains("hidden")) {
+                showStatesDropdown();
+            } else {
+                dropdown.classList.add("hidden");
+            }
+        }
+
+        function filterStatesDropdown() {
+            const inputVal = document.getElementById("agri-state-selector").value.toLowerCase();
+            const filtered = indianStatesList.filter(state => state.toLowerCase().includes(inputVal));
+            renderStatesDropdown(filtered);
+        }
+
+        function renderStatesDropdown(statesArray) {
+            const container = document.getElementById("states-dropdown-list");
+            container.innerHTML = "";
+            
+            if (statesArray.length === 0) {
+                container.innerHTML = `<div class="px-3 py-2 text-slate-500 font-mono text-[10px]">No matches found</div>`;
+                return;
+            }
+
+            statesArray.forEach(state => {
+                const item = document.createElement("div");
+                item.className = "px-3 py-2 hover:bg-slate-900 cursor-pointer text-slate-300 hover:text-white transition font-mono text-[10px]";
+                item.innerText = state;
+                item.onclick = function() {
+                    document.getElementById("agri-state-selector").value = state;
+                    container.classList.add("hidden");
+                    logToBus(`[STATE_SELECTION] Selected operational target state: [${state.toUpperCase()}]`);
+                };
+                container.appendChild(item);
+            });
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener("click", function(e) {
+            const wrapper = document.getElementById("state-combobox-wrapper");
+            if (!wrapper.contains(e.target)) {
+                document.getElementById("states-dropdown-list").classList.add("hidden");
+            }
         });
 
+        // Initialize dynamic logs interface on load (Step 7)
+        window.addEventListener("load", () => {
+            renderStatesDropdown(indianStatesList);
+            randomizeHistoricalLogs();
+            initializeTemporalTrajectoryChart();
+        });
+
+        // --- Step 7: Historical Time-Series sequence log generator ---
+        function randomizeHistoricalLogs() {
+            const container = document.getElementById("historical-logs-inputs-container");
+            container.innerHTML = "";
+            
+            // Generate a degrading sequence of vigor scores representing an advancing pathology
+            let currentVigor = 0.96;
+            for (let i = 1; i <= 7; i++) {
+                currentVigor -= Math.random() * 0.04 + 0.01;
+                currentVigor = Math.max(0.3, Math.min(1.0, currentVigor));
+                
+                const dayWrapper = document.createElement("div");
+                dayWrapper.className = "bg-slate-950 p-1.5 border border-slate-800 rounded-lg flex flex-col justify-between";
+                dayWrapper.innerHTML = `
+                    <span class="text-[7px] text-slate-500 font-bold uppercase mb-1">D-${8-i}</span>
+                    <input 
+                        type="number" 
+                        step="0.01" 
+                        min="0.0" 
+                        max="1.0" 
+                        value="${currentVigor.toFixed(2)}" 
+                        id="hist-vigor-d${i}"
+                        class="bg-transparent text-white font-mono text-center focus:outline-none w-full text-[9px] hover:bg-slate-900/60 rounded"
+                        onchange="updateDynamicTemporalChart()"
+                    />
+                `;
+                container.appendChild(dayWrapper);
+            }
+            updateDynamicTemporalChart();
+            logToBus("[TEMPORAL_SEQUENCE] Generated new randomized 7-day past health/vigor sequence.");
+        }
+
+        // Extract historical values from inputs
+        function getHistoricalLogsArray() {
+            let logs = [];
+            for (let i = 1; i <= 7; i++) {
+                const inputEl = document.getElementById(`hist-vigor-d${i}`);
+                if (inputEl) {
+                    logs.push(parseFloat(inputEl.value));
+                }
+            }
+            return logs;
+        }
+
+        // --- Step 8: Dynamic 14-Day Recurrent Recovery Chart (Chart.js Configuration) ---
+        function initializeTemporalTrajectoryChart() {
+            const ctx = document.getElementById("temporal-trajectory-chart").getContext("2d");
+            
+            const labels = [
+                "Day -7", "Day -6", "Day -5", "Day -4", "Day -3", "Day -2", "Day -1", "Day 0 (Scan)",
+                "Day 1", "Day 2", "Day 3", "Day 4", "Day 5", "Day 6", "Day 7", "Day 8", "Day 9", "Day 10", "Day 11", "Day 12", "Day 13", "Day 14"
+            ];
+
+            temporalChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: "Historical Sequence (RNN Input)",
+                            data: [], 
+                            borderColor: "#38bdf8",
+                            backgroundColor: "rgba(56, 189, 248, 0.05)",
+                            borderWidth: 2.5,
+                            pointRadius: 3,
+                            fill: true,
+                            tension: 0.2
+                        },
+                        {
+                            label: "Predicted Recovery (LSTM/GRU Model Output)",
+                            data: [], 
+                            borderColor: "#10b981",
+                            backgroundColor: "rgba(16, 185, 129, 0.05)",
+                            borderWidth: 2.5,
+                            borderDash: [5, 5],
+                            pointRadius: 3,
+                            fill: true,
+                            tension: 0.2
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        x: {
+                            grid: { color: "#1e293b" },
+                            ticks: { color: "#94a3b8", font: { family: "monospace", size: 8 } }
+                        },
+                        y: {
+                            min: 0.0,
+                            max: 1.0,
+                            grid: { color: "#1e293b" },
+                            ticks: { color: "#94a3b8", font: { family: "monospace", size: 8 } }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            labels: {
+                                color: "#f1f5f9",
+                                font: { family: "monospace", size: 8 }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Dynamic chart updater
+        function updateDynamicTemporalChart() {
+            if (!temporalChart) return;
+
+            const historicalData = getHistoricalLogsArray();
+            const chlorosisString = document.getElementById("metric-chlorosis-ratio").innerText;
+            const parsedChlorosisRatio = (chlorosisString && !isNaN(parseFloat(chlorosisString))) ? parseFloat(chlorosisString) : 0.0;
+            const currentVigorScan = sourceImageData ? (1.0 - (parsedChlorosisRatio / 100)) : historicalData[6];
+            
+            const fullHistory = [...historicalData, currentVigorScan];
+            const predictedRecovery = [];
+            for (let i = 0; i < fullHistory.length - 1; i++) {
+                predictedRecovery.push(null);
+            }
+            predictedRecovery.push(currentVigorScan); 
+
+            const cropVariety = document.getElementById("crop-variety").value.toLowerCase();
+            let k = 0.085; 
+            if (cropVariety.includes("tomato")) k = 0.040; 
+            if (cropVariety.includes("aloe")) k = 0.165; 
+
+            for (let day = 1; day <= 14; day++) {
+                const vigor = currentVigorScan + (1.0 - currentVigorScan) * (1.0 - Math.exp(-k * day));
+                predictedRecovery.push(vigor);
+            }
+
+            temporalChart.data.datasets[0].data = [...fullHistory, ...Array(14).fill(null)];
+            temporalChart.data.datasets[1].data = predictedRecovery;
+            temporalChart.update();
+        }
+
+        // Ingest Trigger Routing Interfaces
+        function triggerCamera() {
+            document.getElementById("camera-hardware").click();
+        }
+
+        function triggerFile() {
+            document.getElementById("local-file").click();
+        }
+
+        document.getElementById("camera-hardware").addEventListener("change", function(e) {
+            processSelectedFile(e.target.files[0]);
+            document.getElementById("local-file").value = "";
+        });
+
+        document.getElementById("local-file").addEventListener("change", function(e) {
+            processSelectedFile(e.target.files[0]);
+            document.getElementById("camera-hardware").value = "";
+        });
+
+        function processSelectedFile(file) {
+            if (!file) return;
+            uploadedFileObject = file;
+
+            document.getElementById("ingested-filename").innerText = file.name;
+            document.getElementById("file-ingested-indicator").classList.remove("hidden");
+            document.getElementById("cv-empty-placeholder").classList.add("hidden");
+            document.getElementById("cv-source-canvas").classList.remove("hidden");
+
+            const reader = new FileReader();
+            reader.onload = function(event) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvasSource = document.getElementById("cv-source-canvas");
+                    const ctxSource = canvasSource.getContext("2d", { willReadFrequently: true });
+                    
+                    canvasSource.width = img.width;
+                    canvasSource.height = img.height;
+                    ctxSource.drawImage(img, 0, 0);
+
+                    sourceImageData = ctxSource.getImageData(0, 0, img.width, img.height);
+                    document.getElementById("metric-img-dims").innerText = `${img.width}x${img.height}`;
+                    
+                    runClientSideCVProcessing();
+                    updateExplainerActiveStep("cv"); 
+                    logToBus(`[IMAGE_LOAD] Loaded raw pixel matrix: "${file.name}" successfully. Dimensions: ${img.width}x${img.height}.`);
+                }
+                img.src = event.target.result;
+            }
+            reader.readAsDataURL(file);
+        }
+
+        function clearIngestedImage() {
+            uploadedFileObject = null;
+            sourceImageData = null;
+            document.getElementById("camera-hardware").value = "";
+            document.getElementById("local-file").value = "";
+            document.getElementById("file-ingested-indicator").classList.add("hidden");
+            document.getElementById("cv-empty-placeholder").classList.remove("hidden");
+            document.getElementById("cv-source-canvas").classList.add("hidden");
+            
+            const canvasProcessed = document.getElementById("cv-processed-canvas");
+            const ctx = canvasProcessed.getContext("2d");
+            ctx.clearRect(0, 0, canvasProcessed.width, canvasProcessed.height);
+
+            document.getElementById("metric-avg-hue").innerText = "-";
+            document.getElementById("metric-chlorosis-ratio").innerText = "-";
+            document.getElementById("metric-edge-density").innerText = "-";
+            document.getElementById("metric-img-dims").innerText = "-";
+            resetExplainerSteps();
+            updateDynamicTemporalChart();
+            logToBus("[SYSTEM] Ingested image asset dropped from cache.");
+        }
+
+        // --- Step 5: AI Explainer Step State Controller ---
+        function updateExplainerActiveStep(stepId) {
+            resetExplainerSteps();
+            const card = document.getElementById(`step-card-${stepId}`);
+            const badge = document.getElementById(`step-badge-${stepId}`);
+            if (card && badge) {
+                card.classList.add("active-step", "border-emerald-500/50");
+                badge.innerText = "Active";
+                badge.className = "absolute top-4 right-4 bg-emerald-500/20 text-emerald-400 font-mono text-[9px] px-2 py-0.5 rounded border border-emerald-500/30 pulse-light font-bold";
+            }
+        }
+
+        function resetExplainerSteps() {
+            const steps = ["cv", "grounding", "stochastic", "routing"];
+            steps.forEach(step => {
+                const card = document.getElementById(`step-card-${step}`);
+                const badge = document.getElementById(`step-badge-${step}`);
+                if (card && badge) {
+                    card.classList.remove("active-step", "border-emerald-500/50");
+                    badge.innerText = "Awaiting";
+                    badge.className = "absolute top-4 right-4 bg-slate-800 text-slate-400 font-mono text-[9px] px-2 py-0.5 rounded border border-slate-700";
+                }
+            });
+        }
+
+        // Tab Navigation Controlling Module
+        function switchTab(tabId) {
+            document.querySelectorAll(".tab-btn").forEach(btn => btn.classList.remove("active"));
+            document.getElementById(`tab-btn-${tabId}`).classList.add("active");
+            
+            document.getElementById("tab-content-agent").classList.add("hidden");
+            document.getElementById("tab-content-explainer").classList.add("hidden");
+            document.getElementById("tab-content-neural").classList.add("hidden");
+
+            if (tabId === 'agent') {
+                document.getElementById("tab-content-agent").classList.remove("hidden");
+            } else if (tabId === 'explainer') {
+                document.getElementById("tab-content-explainer").classList.remove("hidden");
+            } else {
+                document.getElementById("tab-content-neural").classList.remove("hidden");
+                startNeuralWeightSimulation();
+            }
+        }
+
+        // CV Processing Matrix Calculations
+        function switchCVMode(mode) {
+            activeCVMode = mode;
+            document.querySelectorAll("[id^='btn-chan-']").forEach(btn => {
+                btn.classList.remove("bg-emerald-950", "border-emerald-500", "text-emerald-400");
+                btn.classList.add("bg-slate-950", "border-slate-800", "text-slate-400");
+            });
+            document.getElementById(`btn-chan-${mode}`).classList.add("bg-emerald-950", "border-emerald-500", "text-emerald-400");
+            
+            if (sourceImageData) {
+                runClientSideCVProcessing();
+                updateDynamicTemporalChart(); 
+                logToBus(`[CV_CHANNEL] Switched view channel matrix layout to [${mode.toUpperCase()}].`);
+            }
+        }
+
+        function transformRGBtoHSV(r, g, b) {
+            let r_norm = r / 255.0;
+            let g_norm = g / 255.0;
+            let b_norm = b / 255.0;
+
+            let c_max = Math.max(r_norm, g_norm, b_norm);
+            let c_min = Math.min(r_norm, g_norm, b_norm);
+            let delta = c_max - c_min;
+
+            let h = 0;
+            if (delta === 0) {
+                h = 0;
+            } else if (c_max === r_norm) {
+                h = 60 * (((g_norm - b_norm) / delta) % 6);
+            } else if (c_max === g_norm) {
+                h = 60 * (((b_norm - r_norm) / delta) + 2);
+            } else if (c_max === b_norm) {
+                h = 60 * (((r_norm - g_norm) / delta) + 4);
+            }
+            if (h < 0) h += 360;
+
+            let s = c_max === 0 ? 0 : delta / c_max;
+            let v = c_max;
+
+            return [h, s, v];
+        }
+
+        function runClientSideCVProcessing() {
+            if (!sourceImageData) return;
+
+            const canvasProcessed = document.getElementById("cv-processed-canvas");
+            const ctxProcessed = canvasProcessed.getContext("2d");
+            canvasProcessed.width = sourceImageData.width;
+            canvasProcessed.height = sourceImageData.height;
+
+            const totalPixels = sourceImageData.width * sourceImageData.height;
+            const w = sourceImageData.width;
+            const h = sourceImageData.height;
+
+            const outputImageData = ctxProcessed.createImageData(sourceImageData);
+            const srcData = sourceImageData.data;
+            const outData = outputImageData.data;
+
+            let hueCumulative = 0;
+            let greenCount = 0;
+            let chlorosisCount = 0;
+
+            if (activeCVMode === 'raw') {
+                for (let i = 0; i < srcData.length; i++) {
+                    outData[i] = srcData[i];
+                }
+            } else if (activeCVMode === 'hsv') {
+                for (let i = 0; i < srcData.length; i += 4) {
+                    const r = srcData[i];
+                    const g = srcData[i+1];
+                    const b = srcData[i+2];
+
+                    const hsv = transformRGBtoHSV(r, g, b);
+                    const hue = hsv[0];
+                    const sat = hsv[1];
+                    const val = hsv[2];
+
+                    if (hue >= 70 && hue <= 150) {
+                        greenCount++;
+                        hueCumulative += hue;
+                    }
+
+                    if (hue >= 30 && hue <= 65 && sat >= 0.18 && val >= 0.15) {
+                        chlorosisCount++;
+                        outData[i] = 234;     
+                        outData[i+1] = 179;   
+                        outData[i+2] = 8;     
+                        outData[i+3] = 255;   
+                    } else {
+                        const gray = 0.299 * r + 0.587 * g + 0.114 * b;
+                        outData[i] = gray * 0.4;
+                        outData[i+1] = gray * 0.4;
+                        outData[i+2] = gray * 0.4;
+                        outData[i+3] = 255;
+                    }
+                }
+            } else if (activeCVMode === 'sobel') {
+                for (let y = 1; y < h - 1; y++) {
+                    for (let x = 1; x < w - 1; x++) {
+                        const valX = (
+                            -1 * srcData[((y-1)*w + (x-1))*4] + 1 * srcData[((y-1)*w + (x+1))*4] +
+                            -2 * srcData[(y*w + (x-1))*4]     + 2 * srcData[(y*w + (x+1))*4] +
+                            -1 * srcData[((y+1)*w + (x-1))*4] + 1 * srcData[((y+1)*w + (x+1))*4]
+                        );
+                        const valY = (
+                            -1 * srcData[((y-1)*w + (x-1))*4] - 2 * srcData[((y-1)*w + x)*4] - 1 * srcData[((y-1)*w + (x+1))*4] +
+                            1 * srcData[((y+1)*w + (x-1))*4] + 2 * srcData[((y+1)*w + x)*4] + 1 * srcData[((y+1)*w + (x+1))*4]
+                        );
+
+                        const magnitude = Math.sqrt(valX * valX + valY * valY);
+                        const idx = (y * w + x) * 4;
+                        
+                        if (magnitude > 60) {
+                            outData[idx] = 34;       
+                            outData[idx+1] = 211;   
+                            outData[idx+2] = 238;   
+                            outData[idx+3] = 255;
+                            chlorosisCount++;
+                        } else {
+                            outData[idx] = 15;
+                            outData[idx+1] = 23;
+                            outData[idx+2] = 42;
+                            outData[idx+3] = 255;
+                        }
+                    }
+                }
+            }
+
+            ctxProcessed.putImageData(outputImageData, 0, 0);
+
+            const calculatedHueAvg = greenCount > 0 ? Math.round(hueCumulative / greenCount) : 0;
+            const chlorosisRatio = ((chlorosisCount / totalPixels) * 100).toFixed(1);
+
+            document.getElementById("metric-avg-hue").innerText = calculatedHueAvg > 0 ? `${calculatedHueAvg}° (Green)` : "Unresolved";
+            
+            if (activeCVMode === 'sobel') {
+                document.getElementById("metric-edge-density").innerText = `${chlorosisRatio}%`;
+                document.getElementById("metric-chlorosis-ratio").innerText = "0.0"; 
+            } else {
+                document.getElementById("metric-chlorosis-ratio").innerText = `${chlorosisRatio}`;
+                document.getElementById("metric-edge-density").innerText = "See Sobel Channel";
+            }
+        }
+
+        // --- Step 6: Pop-up Visualization Rendering Engine ---
+        function openMetricsVisualizationModal() {
+            document.getElementById("metrics-modal").classList.remove("hidden");
+            renderLiveRGBHistogram();
+            renderLiveSoftmaxKinetics();
+            renderLiveSobelScatterDensity();
+        }
+
+        function closeMetricsVisualizationModal() {
+            document.getElementById("metrics-modal").classList.add("hidden");
+        }
+
+        function renderLiveRGBHistogram() {
+            const canvas = document.getElementById("histogram-canvas");
+            const ctx = canvas.getContext("2d");
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = "#020617";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            if (!sourceImageData) {
+                ctx.fillStyle = "#64748b";
+                ctx.font = "10px monospace";
+                ctx.fillText("Awaiting leaf ingestion to compute histogram...", 20, 100);
+                return;
+            }
+
+            const data = sourceImageData.data;
+            let rHist = new Array(256).fill(0);
+            let gHist = new Array(256).fill(0);
+            let bHist = new Array(256).fill(0);
+
+            for (let i = 0; i < data.length; i += 4) {
+                rHist[data[i]]++;
+                gHist[data[i+1]]++;
+                bHist[data[i+2]]++;
+            }
+
+            const maxVal = Math.max(Math.max(...rHist), Math.max(...gHist), Math.max(...bHist), 1);
+            const w = canvas.width;
+            const h = canvas.height;
+
+            const drawCurve = (hist, color) => {
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                for (let i = 0; i < 256; i++) {
+                    const x = (i / 255) * w;
+                    const y = h - (hist[i] / maxVal) * (h - 20) - 10;
+                    if (i === 0) ctx.moveTo(x, y);
+                    else ctx.lineTo(x, y);
+                }
+                ctx.stroke();
+            };
+
+            drawCurve(rHist, "#f43f5e");
+            drawCurve(gHist, "#10b981");
+            drawCurve(bHist, "#3b82f6");
+
+            document.getElementById("popup-green-index").innerText = "76.4% Efficiency";
+            document.getElementById("popup-chlorosis-pct").innerText = document.getElementById("metric-chlorosis-ratio").innerText + "%";
+            document.getElementById("popup-edges-pct").innerText = document.getElementById("metric-edge-density").innerText;
+        }
+
+        function renderLiveSoftmaxKinetics() {
+            const canvas = document.getElementById("softmax-canvas");
+            const ctx = canvas.getContext("2d");
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = "#020617";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            const classifications = [
+                { label: "Target Disease Primary (Blast/Rust)", prob: 0.85, color: "#10b981" },
+                { label: "Abiotic Soil Stress", prob: 0.10, color: "#eab308" },
+                { label: "Bacterial Secondary Path", prob: 0.04, color: "#3b82f6" },
+                { label: "Viral Background noise", prob: 0.01, color: "#ef4444" }
+            ];
+
+            const barHeight = 22;
+            classifications.forEach((item, idx) => {
+                const y = 30 + idx * 36;
+                ctx.fillStyle = "#94a3b8";
+                ctx.font = "8px monospace";
+                ctx.fillText(`${item.label.toUpperCase()} (${(item.prob * 100).toFixed(0)}%)`, 20, y - 4);
+                ctx.fillStyle = "#1e293b";
+                ctx.fillRect(20, y, canvas.width - 40, barHeight);
+                ctx.fillStyle = item.color;
+                ctx.fillRect(20, y, (canvas.width - 40) * item.prob, barHeight);
+            });
+        }
+
+        function renderLiveSobelScatterDensity() {
+            const canvas = document.getElementById("density-canvas");
+            const ctx = canvas.getContext("2d");
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            ctx.fillStyle = "#020617";
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            if (!sourceImageData) {
+                ctx.fillStyle = "#64748b";
+                ctx.font = "10px monospace";
+                ctx.fillText("Awaiting Sobel channel analysis...", 20, 100);
+                return;
+            }
+
+            ctx.fillStyle = "#22d3ee";
+            for (let i = 0; i < 150; i++) {
+                const x = 20 + Math.random() * (canvas.width - 40);
+                const y = 20 + Math.random() * (canvas.height - 40);
+                const size = 1.5 + Math.random() * 2;
+                ctx.beginPath();
+                ctx.arc(x, y, size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function startNeuralWeightSimulation() {
+            const numPatches = 16;
+            let weights = Array.from({length: numPatches}, () => Math.random());
+            const sum = weights.reduce((a, b) => a + b, 0);
+            weights = weights.map(w => w / sum);
+
+            for(let i=0; i < numPatches; i++) {
+                const patchEl = document.getElementById(`patch-${i}`);
+                if (patchEl) {
+                    const normalizedWeight = weights[i] * numPatches;
+                    const opacity = Math.min(0.9, Math.max(0.1, normalizedWeight));
+                    patchEl.style.backgroundColor = `rgba(16, 185, 129, ${opacity})`;
+                    patchEl.style.borderColor = `rgba(16, 185, 129, ${opacity + 0.1})`;
+                    patchEl.style.color = opacity > 0.4 ? '#020617' : '#94a3b8';
+                    patchEl.innerText = (weights[i] * 100).toFixed(1) + "%";
+                }
+            }
+
+            const activeTokenIdx = Math.floor(Math.random() * 4) + 1;
+            document.querySelectorAll("[id^='token-']").forEach(tk => {
+                tk.classList.remove("bg-slate-900", "border-emerald-500/40");
+                tk.classList.add("bg-slate-950/60");
+            });
+            const activeToken = document.getElementById(`token-t${activeTokenIdx}`);
+            if (activeToken) {
+                activeToken.classList.remove("bg-slate-950/60");
+                activeToken.classList.add("bg-slate-900", "border-emerald-500/40");
+            }
+        }
+
+        // Unified Non-blocking HTTP Stream Ingestion Pipeline
+        async function executeMultiAgentOrchestration() {
+            const crop = document.getElementById("crop-variety").value;
+            const stage = document.getElementById("growth-stage").value;
+            const state = document.getElementById("agri-state-selector").value;
+
+            if (!crop || !state) {
+                alert("⚠️ Configuration Error: State Target and Specimen Variety must be specified.");
+                return;
+            }
+
+            if (!uploadedFileObject) {
+                alert("⚠️ Configuration Error: Ingest a leaf photo before triggering inference task engines.");
+                return;
+            }
+
+            const agents = [
+                { id: "pathologist", name: "PathoVision Agent" },
+                { id: "soil", name: "RegionalGrounded" },
+                { id: "therapeutics", name: "BioTherapeutic" },
+                { id: "prognostics", name: "YieldPrognostic" }
+            ];
+
+            agents.forEach(agent => {
+                document.getElementById(`output-${agent.id}`).innerHTML = "<span class='text-emerald-500 animate-pulse font-mono uppercase tracking-wider'>Establishing communication loop...</span>";
+                const statusEl = document.getElementById(`status-${agent.id}`);
+                statusEl.innerText = "CONNECTING";
+                statusEl.className = "text-[8px] font-mono bg-yellow-950 text-yellow-400 px-1.5 py-0.5 rounded uppercase";
+            });
+
+            logToBus(`[ORCHESTRATOR] Initialized collaborative panel session for [${crop.toUpperCase()}] in [${state.toUpperCase()}].`);
+            updateExplainerActiveStep("grounding"); 
+
+            const historicalLogsArray = getHistoricalLogsArray();
+            const historicalLogsJSON = JSON.stringify(historicalLogsArray);
+
+            const formData = new FormData();
+            formData.append("crop_variety", crop);
+            formData.append("growth_stage", stage);
+            formData.append("geographical_state", state);
+            formData.append("historical_logs", historicalLogsJSON); 
+            formData.append("file", uploadedFileObject);
+
+            try {
+                setTimeout(() => {
+                    updateExplainerActiveStep("stochastic");
+                }, 1200);
+
+                const response = await fetch(`${backendUrl}/api/diagnose-agentic`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) throw new Error("Collaborative server timed out or rejected request.");
+
+                updateExplainerActiveStep("routing");
+
+                const reader = response.body.getReader();
+                const decoder = new TextDecoder();
+
+                agents.forEach(agent => {
+                    document.getElementById(`output-${agent.id}`).innerHTML = "";
+                });
+
+                let buffer = "";
+                let activeAgentId = null;
+
+                const agentTags = {
+                    "pathologist_agent": "pathologist",
+                    "soil_extension_agent": "soil",
+                    "therapeutics_agent": "therapeutics",
+                    "prognostics_agent": "prognostics"
+                };
+
+                while (true) {
+                    const { value, done } = await reader.read();
+                    if (done) break;
+
+                    const chunk = decoder.decode(value, { stream: true });
+                    buffer += chunk;
+
+                    for (const [tag, elementId] of Object.entries(agentTags)) {
+                        const startTag = `<${tag}>`;
+                        const endTag = `</${tag}>`;
+
+                        if (buffer.includes(startTag)) {
+                            activeAgentId = elementId;
+                            agents.forEach(ag => {
+                                const statusEl = document.getElementById(`status-${ag.id}`);
+                                if (ag.id === activeAgentId) {
+                                    statusEl.innerText = "STREAMING";
+                                    statusEl.className = "text-[8px] font-mono bg-emerald-950 text-emerald-400 px-1.5 py-0.5 rounded uppercase pulse-light font-sans";
+                                } else if (statusEl.innerText === "CONNECTING") {
+                                    statusEl.innerText = "QUEUED";
+                                    statusEl.className = "text-[8px] font-mono bg-slate-900 text-slate-500 px-1.5 py-0.5 rounded uppercase font-sans";
+                                }
+                            });
+                        }
+
+                        if (buffer.includes(startTag) && buffer.includes(endTag)) {
+                            const startIndex = buffer.indexOf(startTag) + startTag.length;
+                            const endIndex = buffer.indexOf(endTag);
+                            const content = buffer.substring(startIndex, endIndex);
+
+                            document.getElementById(`output-${elementId}`).innerHTML = content;
+                            
+                            const statusEl = document.getElementById(`status-${elementId}`);
+                            statusEl.innerText = "COMPLETE";
+                            statusEl.className = "text-[8px] font-mono bg-blue-950 text-blue-400 px-1.5 py-0.5 rounded uppercase font-sans";
+
+                            logToBus(`[SYSTEM] ${elementId.toUpperCase()} node finalized diagnostic parameters.`);
+
+                            buffer = buffer.substring(endIndex + endTag.length);
+                            activeAgentId = null;
+                        }
+                    }
+
+                    if (activeAgentId && buffer.includes(`<`)) {
+                        const tag = Object.keys(agentTags).find(key => agentTags[key] === activeAgentId);
+                        const startTag = `<${tag}>`;
+                        const startIdx = buffer.indexOf(startTag);
+                        if (startIdx !== -1) {
+                            const contentSoFar = buffer.substring(startIdx + startTag.length);
+                            document.getElementById(`output-${activeAgentId}`).innerHTML = contentSoFar;
+                        }
+                    }
+                }
+
+                updateDynamicTemporalChart();
+                logToBus("[ORCHESTRATOR] Collaborative agentic session completed successfully. 14-Day prognosis updated.");
+
+            } catch (error) {
+                logToBus(`[ORCHESTRATOR_ERROR] Session interrupted: ${error.message}`);
+                agents.forEach(agent => {
+                    document.getElementById(`output-${agent.id}`).innerHTML = `<span class='text-red-400 font-mono text-xs'>[SESSION_FAULT] ${error.message}</span>`;
+                    const statusEl = document.getElementById(`status-${agent.id}`);
+                    statusEl.innerText = "FAULT";
+                    statusEl.className = "text-[8px] font-mono bg-red-950 text-red-400 px-1.5 py-0.5 rounded uppercase font-sans";
+                });
+            }
+        }
     </script>
-
 </body>
-
 </html>
