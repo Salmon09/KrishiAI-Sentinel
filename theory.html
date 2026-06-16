@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>KrishiAI | Virtual Agronomist Portal</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+</head>
+
+<body class="min-h-screen bg-stone-50 text-gray-800 font-sans">
+
+
+
+    <header class="bg-emerald-700 text-white shadow-md px-6 py-4 flex justify-between items-center">
+
+        <div class="flex items-center space-x-3">
+
+            <span class="text-2xl">🌱</span>
+
+            <h1 class="text-xl font-bold tracking-wide">KrishiAI | Virtual Agronomist Portal</h1>
+
+        </div>
+
+        <span class="bg-emerald-600 px-3 py-1 rounded-full text-xs font-semibold animate-pulse">System Live</span>
+
+    </header>
+
+
+
+    <main class="max-w-7xl mx-auto p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+       
+
+        <div class="lg:col-span-2 space-y-6">
+
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+
+                <h2 class="text-lg font-bold text-emerald-900 flex items-center space-x-2 mb-4">
+
+                    <span>🩺</span> <span>Consult Virtual Agronomist AI</span>
+
+                </h2>
+
+                <p class="text-sm text-gray-500 mb-6">Describe your crop's current status and any observed symptoms below. Our expert AI model will diagnose the underlying issue and generate a structured treatment strategy.</p>
+
+
+
+                <form id="aiForm" class="space-y-4">
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                        <div>
+
+                            <label class="block text-xs font-semibold uppercase text-gray-500 mb-1 tracking-wider">Crop Variety</label>
+
+                            <input
+
+                                type="text"
+
+                                id="cropType"
+
+                                placeholder="e.g., Rice, Tomato, Cotton"
+
+                                class="w-full border border-gray-200 rounded-lg p-2.5 text-sm focus:outline-none focus:border-emerald-600 transition shadow-sm"
+
+                                required
+
+                            />
+
+                        </div>
+
+                        <div>
+
+                            <label class="block text-xs font-semibold uppercase text-gray-500 mb-1 tracking-wider">Growth Stage</label>
+
+                            <select
+
+                                id="cropStage"
+
+                                class="w-full border border-gray-200 rounded-lg p-2.5 text-sm focus:outline-none focus:border-emerald-600 bg-white shadow-sm"
+
+                                required
+
+                            >
+
+                                <option value="">Choose Lifecycle Stage...</option>
+
+                                <option value="Seedling">Seedling (Early Stage)</option>
+
+                                <option value="Vegetative">Vegetative Growth</option>
+
+                                <option value="Flowering">Flowering / Fruiting</option>
+
+                                <option value="Harvesting">Ready for Harvest</option>
+
+                            </select>
+
+                        </div>
+
+                    </div>
+
+
+
+                    <div>
+
+                        <label class="block text-xs font-semibold uppercase text-gray-500 mb-1 tracking-wider">Observed Symptoms & Field Anomalies</label>
+
+                        <textarea
+
+                            id="symptoms"
+
+                            rows="4"
+
+                            placeholder="Detail leaf discoloration, holes, wilting, powdery mildew, or pest clusters clearly..."
+
+                            class="w-full border border-gray-200 rounded-lg p-2.5 text-sm focus:outline-none focus:border-emerald-600 transition shadow-sm"
+
+                            required
+
+                        ></textarea>
+
+                    </div>
+
+
+
+                    <button
+
+                        type="submit"
+
+                        id="submitBtn"
+
+                        class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-3 rounded-lg text-sm transition shadow-sm font-semibold tracking-wide"
+
+                    >
+
+                        Execute AI Consultation
+
+                    </button>
+
+                </form>
+
+            </div>
+
+
+
+            <div id="aiResponseContainer" class="hidden bg-emerald-50 rounded-xl border border-emerald-100 p-6 shadow-sm transition-all duration-300">
+
+                <h3 class="text-md font-bold text-emerald-900 mb-3 flex items-center space-x-2">
+
+                    <span>🤖</span> <span>Agronomist Diagnostic Analysis</span>
+
+                </h3>
+
+                <div id="aiResponseText" class="text-sm text-emerald-950 whitespace-pre-line bg-white p-5 rounded-lg border border-emerald-100 shadow-inner leading-relaxed font-mono">
+
+                    </div>
+
+            </div>
+
+        </div>
+
+
+
+        <div class="space-y-6">
+
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+
+                <h2 class="text-lg font-bold text-gray-900 flex items-center space-x-2 mb-3">
+
+                    <span>🗺️</span> <span>Log Operational Field</span>
+
+                </h2>
+
+                <form id="logForm" class="space-y-3">
+
+                    <input
+
+                        type="text"
+
+                        id="logCropName"
+
+                        placeholder="Crop Designation (e.g., Maize)"
+
+                        class="w-full border border-gray-200 rounded-lg p-2 text-sm focus:outline-none focus:border-emerald-600 shadow-sm"
+
+                        required
+
+                    />
+
+                    <div class="grid grid-cols-2 gap-2">
+
+                        <input
+
+                            type="number"
+
+                            step="0.1"
+
+                            id="logArea"
+
+                            placeholder="Area (Acres)"
+
+                            class="w-full border border-gray-200 rounded-lg p-2 text-sm focus:outline-none focus:border-emerald-600 shadow-sm"
+
+                            required
+
+                        />
+
+                        <select
+
+                            id="logStage"
+
+                            class="w-full border border-gray-200 rounded-lg p-2 text-sm focus:outline-none focus:border-emerald-600 bg-white shadow-sm"
+
+                        >
+
+                            <option value="Seedling">Seedling</option>
+
+                            <option value="Vegetative">Vegetative</option>
+
+                            <option value="Flowering">Flowering</option>
+
+                            <option value="Harvesting">Harvesting</option>
+
+                        </select>
+
+                    </div>
+
+                    <button type="submit" class="w-full bg-gray-800 hover:bg-gray-900 text-white font-medium py-2 rounded-lg text-xs transition shadow-sm uppercase tracking-wider">
+
+                        + Append to Active Ledger
+
+                    </button>
+
+                </form>
+
+            </div>
+
+
+
+            <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+
+                <h2 class="text-xs font-bold text-gray-400 uppercase tracking-wider mb-4">Active Monitored Parcels</h2>
+
+                <div id="logList" class="space-y-3">
+
+                    <div class="border border-gray-100 rounded-lg p-3 flex justify-between items-center bg-stone-50 shadow-sm">
+
+                        <div>
+
+                            <h4 class="font-bold text-sm text-gray-900">Wheat (Premium)</h4>
+
+                            <p class="text-xs text-gray-500">5.0 Acres • Vegetative Growth</p>
+
+                        </div>
+
+                        <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-green-100 text-green-700">Healthy</span>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+
+    </main>
+
+
+
+    <script>
+
+        // --- 1. HANDLING AI DIAGNOSIS REQUESTS ---
+
+        document.getElementById('aiForm').addEventListener('submit', async (e) => {
+
+            e.preventDefault();
+
+           
+
+            const submitBtn = document.getElementById('submitBtn');
+
+            const responseContainer = document.getElementById('aiResponseContainer');
+
+            const responseText = document.getElementById('aiResponseText');
+
+           
+
+            // UI Visual Loading State Update
+
+            submitBtn.disabled = true;
+
+            submitBtn.innerText = 'Analyzing crop symptoms against expert database...';
+
+            responseContainer.classList.remove('hidden');
+
+            responseText.innerHTML = `<div class="flex items-center space-x-2 text-emerald-700 font-sans">
+
+                <div class="animate-spin rounded-full h-4 w-4 border-2 border-emerald-700 border-t-transparent"></div>
+
+                <span>Synthesizing organic and chemical remedies...</span>
+
+            </div>`;
+
+
+
+            // Data extraction
+
+            const payload = {
+
+                crop_type: document.getElementById('cropType').value,
+
+                crop_stage: document.getElementById('cropStage').value,
+
+                symptoms: document.getElementById('symptoms').value
+
+            };
+
+
+
+            try {
+
+                // Fetch call targeting our FastAPI local server endpoint
+
+                const response = await fetch('http://127.0.0.1:8000/api/advise', {
+
+                    method: 'POST',
+
+                    headers: { 'Content-Type': 'application/json' },
+
+                    body: JSON.stringify(payload)
+
+                });
+
+                const data = await response.json();
+
+                responseText.innerText = data.diagnosis_report;
+
+            } catch (error) {
+
+                responseText.innerHTML = `<span class="text-red-600 font-sans font-medium">⚠️ Connection Refused! Make sure your FastAPI backend server is running in VS Code using: <code class="bg-red-50 px-1 py-0.5 rounded border text-xs">uvicorn main:app --reload</code></span>`;
+
+            } finally {
+
+                submitBtn.disabled = false;
+
+                submitBtn.innerText = 'Execute AI Consultation';
+
+            }
+
+        });
+
+
+
+        // --- 2. HANDLING FIELD LOG ENTRIES LOCALLY ---
+
+        document.getElementById('logForm').addEventListener('submit', (e) => {
+
+            e.preventDefault();
+
+           
+
+            const cropName = document.getElementById('logCropName').value;
+
+            const area = document.getElementById('logArea').value;
+
+            const stage = document.getElementById('logStage').value;
+
+            const logList = document.getElementById('logList');
+
+
+
+            const newEntry = document.createElement('div');
+
+            newEntry.className = "border border-gray-100 rounded-lg p-3 flex justify-between items-center bg-stone-50 hover:bg-stone-100 transition shadow-sm animate-fade-in";
+
+            newEntry.innerHTML = `
+
+                <div>
+
+                    <h4 class="font-bold text-sm text-gray-900">${cropName}</h4>
+
+                    <p class="text-xs text-gray-500">${parseFloat(area).toFixed(1)} Acres • ${stage}</p>
+
+                </div>
+
+                <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-green-100 text-green-700">Healthy</span>
+
+            `;
+
+
+
+            logList.insertBefore(newEntry, logList.firstChild);
+
+            document.getElementById('logForm').reset();
+
+        });
+
+    </script>
+
+</body>
+
+</html>
