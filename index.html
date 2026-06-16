@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KrishiAI | Virtual Agronomist Portal</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body { background-color: #ffffff !important; }
+        .terminal-text { font-family: 'Courier New', Courier, monospace; }
+    </style>
+</head>
+<body class="min-h-screen bg-white text-gray-900">
+
+    <header class="bg-emerald-700 text-white px-6 py-4">
+        <h1 class="text-xl font-bold">KrishiAI | Virtual Agronomist Portal</h1>
+    </header>
+
+    <main class="max-w-6xl mx-auto p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
+        
+        <!-- Input Section -->
+        <section class="space-y-4">
+            <div class="bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
+                <h2 class="font-bold text-lg mb-4">Consultation Input</h2>
+                <form id="aiForm" class="space-y-4">
+                    <textarea id="symptoms" rows="4" placeholder="Describe plant symptoms..." class="w-full border border-gray-300 rounded-lg p-3"></textarea>
+                    <button type="submit" id="submitBtn" class="w-full bg-emerald-600 text-white py-2 rounded-lg font-bold">Start Diagnostic Flow</button>
+                </form>
+            </div>
+        </section>
+
+        <!-- Agent Terminal Output -->
+        <section class="space-y-4">
+            <h2 class="font-bold text-lg">Agent Terminal Output</h2>
+            <div id="terminal" class="bg-gray-950 text-emerald-400 p-6 rounded-xl h-80 overflow-y-auto terminal-text text-xs shadow-inner border border-gray-800">
+                <div id="terminal-content">
+                    <p class="text-gray-500">> System Ready. Awaiting field data...</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script>
+        const terminal = document.getElementById('terminal-content');
+
+        function logToTerminal(message, type = 'info') {
+            const p = document.createElement('p');
+            p.className = type === 'step' ? 'text-blue-400' : 'text-emerald-400';
+            p.innerHTML = `> ${message}`;
+            terminal.appendChild(p);
+            document.getElementById('terminal').scrollTop = document.getElementById('terminal').scrollHeight;
+        }
+
+        document.getElementById('aiForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            terminal.innerHTML = ''; // Clear terminal
+
+            // 1. Ingestion Phase
+            logToTerminal("INGESTION: Receiving field data and imagery...");
+            await new Promise(r => setTimeout(r, 800));
+            logToTerminal("INGESTION: Validation complete. Data buffered.", "step");
+
+            // 2. Analysis Phase
+            logToTerminal("ANALYSIS: Multi-agent processing initiated...");
+            await new Promise(r => setTimeout(r, 1200));
+            logToTerminal("ANALYSIS: PathoVision agent identified localized necrotic spots.");
+            logToTerminal("ANALYSIS: Soil health cross-reference confirmed nitrogen deficit.", "step");
+
+            // 3. Synthesis Phase
+            logToTerminal("SYNTHESIS: Collating agent findings...");
+            await new Promise(r => setTimeout(r, 1000));
+            logToTerminal("SYNTHESIS: Prescription generated. Diagnosis: Early Blight.");
+            logToTerminal("SYSTEM: Consultation complete.", "step");
+        });
+    </script>
+</body>
+</html>
